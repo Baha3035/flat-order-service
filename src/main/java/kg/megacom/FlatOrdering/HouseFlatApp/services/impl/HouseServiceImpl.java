@@ -27,6 +27,7 @@ public class HouseServiceImpl implements HouseService {
     public HouseDto saveWithInput(InputHouseData inputHouseData) {
         HouseDto houseDto = new HouseDto();
         houseDto.setAddress(inputHouseData.getAddress());
+        houseDto.setDescriptions(inputHouseData.getDescription());
         houseDto.setArea(inputHouseData.getArea());
         houseDto.setCityVillage(cityVillageService.findById(inputHouseData.getCityVillageId()));
         houseDto.setType(typeService.findById(inputHouseData.getTypeId()));

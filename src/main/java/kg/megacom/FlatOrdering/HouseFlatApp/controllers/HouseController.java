@@ -20,7 +20,7 @@ public class HouseController implements BaseCrudController<HouseDto, Long> {
     @Autowired
     private HouseService houseService;
 
-    @PostMapping("/save-house")
+    @PostMapping("/save-with-input")
     public ResponseEntity<HouseDto> save(@RequestBody InputHouseData inputHouseData){
         return new ResponseEntity<>(houseService.saveWithInput(inputHouseData), HttpStatus.CREATED);
     }

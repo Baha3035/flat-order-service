@@ -20,11 +20,11 @@ public class CodeController implements BaseCrudController<CodeDto, Long> {
     @PostMapping("/put-code")
     public ResponseEntity<Boolean>  putCode(@RequestParam Long user_id, @RequestParam Long code){
         return new ResponseEntity<>(codeService.putCode(code, user_id), HttpStatus.CREATED);
+    }
 
-//    @PutMapping("/chek-code")
-//    public ResponseEntity<InputUserData>  chek(@RequestParam long  code_id,@RequestParam long user_code){
-//            return new ResponseEntity<>(codeService.chekCode(code_id,user_code),HttpStatus.CREATED);
-//        }
+    @PostMapping("/update-code")
+    public ResponseEntity<Boolean>  updateCode(@RequestParam Long user_id){
+        return new ResponseEntity<>(codeService.updateCode(user_id), HttpStatus.CREATED);
     }
 
     @Override

@@ -21,9 +21,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto save(UserDto userDto) {
         UserMapper userMapper = new UserMapper();
-        UserDto userDtoSaved = userMapper.toDto(userRepo.save(userMapper.toEntity(userDto)));
-        codeService.sendCode(userDtoSaved);
-        return userDtoSaved;
+        if(findByPhone(userDto.getPhone())==null) {
+            UserDto userDtoSaved = userMapper.toDto(userRepo.save(userMapper.toEntity(userDto)));
+            codeService.sendCode(userDtoSaved);
+            return userDtoSaved;
+        }else {
+            throw new RuntimeException("User with this phone already exists!!!");
+        }
     }
 
     @Override
@@ -43,5 +47,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserDto> findAll() {
         return null;
+    }
+
+    @Override
+    public UserDto findByPhone(String phone) {
+        UserMapper userMapper = new UserMapper();
+        return userMapper.toDto(userRepo.findByPhone(phone));
     }
 }

@@ -19,7 +19,7 @@ public class ImageController implements BaseCrudController<ImageDto, Long>{
     @Autowired
     private ImageService imageService;
 
-    @PostMapping("/save-image")
+    @PostMapping("/save-with-input")
     public ResponseEntity<List<ImageDto>> save(@RequestBody List<InputImageData> inputImageDataList){
         return new ResponseEntity<>(imageService.saveWithInput(inputImageDataList), HttpStatus.CREATED);
     }

@@ -107,7 +107,7 @@ public class ReserveHistoryServiceImpl implements ReserveHistoryService {
 
             } else {
                 double moneyPaidBefore = payHistoryDtos.stream().mapToDouble(PayHistoryDto::getCash).sum();
-                payHistoryDto.setCash(cash + moneyPaidBefore);
+                payHistoryDto.setCash(cash);
             }
 
             if (payHistoryDto.getCash() >= totalPrice) {

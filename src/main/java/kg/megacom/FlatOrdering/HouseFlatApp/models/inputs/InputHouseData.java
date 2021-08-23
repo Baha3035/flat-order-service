@@ -20,5 +20,4 @@ public class InputHouseData {
     private double lat;
     private double lon;
     private String address;
-    private List<InputImageData> inputImageDataList;
 }

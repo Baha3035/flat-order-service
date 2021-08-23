@@ -1,6 +1,7 @@
 package kg.megacom.FlatOrdering.HouseFlatApp.services.impl;
 import kg.megacom.FlatOrdering.HouseFlatApp.dao.RequestRepo;
 import kg.megacom.FlatOrdering.HouseFlatApp.mappers.RequestMapper;
+import kg.megacom.FlatOrdering.HouseFlatApp.models.dto.CodeDto;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.dto.RequestDto;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.inputs.InputRequestData;
 import kg.megacom.FlatOrdering.HouseFlatApp.services.CodeService;
@@ -21,11 +22,12 @@ public class RequestServiceImpl implements RequestService {
     UserService userService;
     @Override
     public RequestDto saveWithInput(InputRequestData inputRequestData) {
-        RequestDto requestDto = new RequestDto();
-        RequestMapper requestMapper = new RequestMapper();
-        requestDto.setSuccess(true);
-        requestDto.setCode(codeService.findCodeById(inputRequestData.getCodeId()));
-        return requestMapper.toDto(requestRepo.save(requestMapper.toEntity(requestDto)));
+//        RequestDto requestDto = new RequestDto();
+//        RequestMapper requestMapper = new RequestMapper();
+//        requestDto.setSuccess(true);
+//        requestDto.setCode(codeService.findCodeById(inputRequestData.getCodeId()));
+//        return requestMapper.toDto(requestRepo.save(requestMapper.toEntity(requestDto)));
+        return null;
     }
 
     @Override
@@ -56,4 +58,11 @@ public class RequestServiceImpl implements RequestService {
         return null;
     }
 
+    public boolean sendRequest(CodeDto codeDto, boolean status){
+        RequestDto requestDto = new RequestDto();
+        requestDto.setSuccess(status);
+        requestDto.setCode(codeDto);
+        requestDto = save(requestDto);
+        return requestDto.isSuccess();
+    }
 }

@@ -6,16 +6,12 @@ import kg.megacom.FlatOrdering.HouseFlatApp.mappers.CodeMapper;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.dto.CodeDto;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.dto.RequestDto;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.dto.UserDto;
-import kg.megacom.FlatOrdering.HouseFlatApp.models.entities.Code;
-import kg.megacom.FlatOrdering.HouseFlatApp.models.inputs.InputCodeData;
-import kg.megacom.FlatOrdering.HouseFlatApp.models.inputs.InputUserData;
 import kg.megacom.FlatOrdering.HouseFlatApp.services.CodeService;
 import kg.megacom.FlatOrdering.HouseFlatApp.services.RequestService;
 import kg.megacom.FlatOrdering.HouseFlatApp.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -31,54 +27,8 @@ public class CodeServiceImpl implements CodeService {
     @Autowired
     private RequestService requestService;
 
-//    @Override
-//    public CodeDto saveCode(InputCodeData inputCodeData) {
-//        CodeDto codeDto = new CodeDto();
-//        codeDto.setCode((long) ((Math.random() * (9999 - 1000)) + 1000));
-//        codeDto.setCodeStatus(CodeStatus.NEW);
-//        codeDto.setStartDate(inputCodeData.getStartDate());
-//        codeDto.setEndDate(inputCodeData.getStartDate());
-//        codeDto.setUser(userService.findById(inputCodeData.getUserId()));
-////        return codeMapper.toDto(codeRepo.save(codeMapper.toEntity(codeDto)));
-//        return null;
-//    }
-
     @Override
-    public CodeDto findCodeById(Long id) {
-        Code code = codeRepo.findById(id).orElseThrow(()-> new RuntimeException("Код по айди не найден!"));
-//        return codeMapper.toDto(code);
-        return null;
-    }
-
-    @Override
-    public InputUserData chekCode(long code_id, long user_code) {
-    if (user_code <=0){
-        throw new RuntimeException("Введи номально!");
-    }
-        CodeDto codeDto = findCodeById(code_id);
-    if (codeDto.getCode().equals(user_code)){
-        codeDto.setCodeStatus(CodeStatus.APPROVED);
-    }
-    if (!codeDto.getCode().equals(user_code)){
-        codeDto.setCodeStatus(CodeStatus.FAILED);
-    }else codeDto.setCodeStatus(CodeStatus.CANCELED);
-
-    codeDto = saveForCode(codeDto);
-    InputUserData inputUserData = new InputUserData();
-    inputUserData.setCode_id(code_id);
-    inputUserData.setUserCode(user_code);
-
-        return inputUserData;
-    }
-
-    @Override
-    public CodeDto saveForCode(CodeDto codeDto) {
-//        return codeMapper.toDto(codeRepo.save(codeMapper.toEntity(codeDto)));
-        return null;
-    }
-
-    @Override
-    public void sendCode(UserDto userDtoSaved) {
+    public boolean sendCode(UserDto userDtoSaved) {
         CodeDto codeDto = new CodeDto();
         codeDto.setCodeStatus(CodeStatus.NEW);
         Date todayDateToConvert = new Date();
@@ -89,35 +39,38 @@ public class CodeServiceImpl implements CodeService {
         codeDto.setEndDate(codeDto.getStartDate().plusMinutes(3));
         codeDto.setCode(generateCode());
         codeDto.setUser(userDtoSaved);
-        save(codeDto);
+        codeDto = save(codeDto);
+        return requestService.sendRequest(codeDto, true);
     }
 
     @Override
     public boolean putCode(long code, Long userId) {
-        CodeDto codeDto = findByUserId(userId);
-        if(codeDto.getCodeStatus().equals(CodeStatus.CANCELED)){
-            throw new RuntimeException("Your code is cancelled!!!");
+        CodeDto codeDto = findByUserIdAndCodeStatusNot(userId, CodeStatus.CANCELED);
+        if(codeDto.getCodeStatus().equals(CodeStatus.APPROVED)){
+            throw new RuntimeException("Your code is already approved");
         }
         long trueCode = codeDto.getCode();
-        RequestDto requestDto = new RequestDto();
-//        long countOfNotSuccessfulRequests = requestService.countAllByCodeIdAndSuccess(codeDto.getId(), false);
+//        RequestDto requestDto = new RequestDto();
         Date todayDateToConvert = new Date();
         LocalDateTime todaysDate = todayDateToConvert.toInstant()
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime();
-        long possibleSeconds = codeDto.getEndDate().until(todaysDate, ChronoUnit.SECONDS);
-        if(possibleSeconds < 1) {
+        long possibleSeconds = todaysDate.until(codeDto.getEndDate(), ChronoUnit.SECONDS);
+        System.out.println(possibleSeconds);
+        if(possibleSeconds < 0) {
+            boolean status;
             if (code == trueCode) {
                 codeDto.setCodeStatus(CodeStatus.APPROVED);
-                requestDto.setSuccess(true);
+                status = true;
             } else {
                 codeDto.setCodeStatus(CodeStatus.FAILED);
-                requestDto.setSuccess(false);
+                status = false;
             }
             codeDto = save(codeDto);
-            requestDto.setCode(codeDto);
-            requestDto = requestService.save(requestDto);
-            if(requestDto.isSuccess()){
+//            requestDto.setCode(codeDto);
+//            requestDto = requestService.save(requestDto);
+            boolean isSuccessful = requestService.sendRequest(codeDto, status);
+            if(isSuccessful){
                 return true;
             }
             long countOfNotSuccessfulRequests = requestService.countAllByCodeIdAndSuccess(codeDto.getId(), false);
@@ -128,23 +81,21 @@ public class CodeServiceImpl implements CodeService {
             }
         }else {
             codeDto.setCodeStatus(CodeStatus.CANCELED);
-//            Date todayDateToConvert = new Date();
-//            LocalDateTime todaysDate = todayDateToConvert.toInstant()
-//                    .atZone(ZoneId.systemDefault())
-//                    .toLocalDateTime();
             UserDto userDto = userService.findById(userId);
             userDto.setBlockDate(todaysDate.plusHours(1));
-            UserDto savedUser = userService.update(userDto);
-//        codeDto.setUser(savedUser);
+            userService.update(userDto);
             save(codeDto);
         }
         return false;
     }
 
-    @Override
-    public CodeDto findByUserId(Long id) {
+    public CodeDto findByUserIdAndCodeStatusNot(Long id, CodeStatus codeStatus) {
         CodeMapper codeMapper = new CodeMapper();
-        return codeMapper.toDto(codeRepo.findByUserId(id));
+        CodeDto codeDto = codeMapper.toDto(codeRepo.findByUserIdAndCodeStatusNot(id, codeStatus));
+        if(codeDto == null){
+            throw new RuntimeException("Your code is cancelled!!!");
+        }
+        return codeMapper.toDto(codeRepo.findByUserIdAndCodeStatusNot(id, codeStatus));
     }
 
     private long generateCode(){
@@ -160,7 +111,8 @@ public class CodeServiceImpl implements CodeService {
 
     @Override
     public CodeDto update(CodeDto codeDto) {
-        return null;
+        CodeMapper codeMapper = new CodeMapper();
+        return codeMapper.toDto(codeRepo.save(codeMapper.toEntity(codeDto)));
     }
 
     @Override
@@ -171,5 +123,14 @@ public class CodeServiceImpl implements CodeService {
     @Override
     public List<CodeDto> findAll() {
         return null;
+    }
+
+    @Override
+    public boolean updateCode(Long user_id){
+        CodeDto codeDtoPrevious = findByUserIdAndCodeStatusNot(user_id, CodeStatus.CANCELED);
+        codeDtoPrevious.setCodeStatus(CodeStatus.CANCELED);
+        update(codeDtoPrevious);
+        UserDto userDto = userService.findById(user_id);
+        return sendCode(userDto);
     }
 }

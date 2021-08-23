@@ -1,18 +1,15 @@
 package kg.megacom.FlatOrdering.HouseFlatApp.services;
 
+import kg.megacom.FlatOrdering.HouseFlatApp.enums.CodeStatus;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.dto.CodeDto;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.dto.UserDto;
-import kg.megacom.FlatOrdering.HouseFlatApp.models.entities.Code;
-import kg.megacom.FlatOrdering.HouseFlatApp.models.inputs.InputCodeData;
-import kg.megacom.FlatOrdering.HouseFlatApp.models.inputs.InputUserData;
-public interface CodeService extends BaseCrudService<CodeDto, Long>{
-    CodeDto findCodeById(Long id);
-    InputUserData chekCode(long code_id, long user_code);
-    CodeDto saveForCode(CodeDto codeDto);
 
-    void sendCode(UserDto userDtoSaved);
+public interface CodeService extends BaseCrudService<CodeDto, Long>{
+    boolean sendCode(UserDto userDtoSaved);
 
     boolean putCode(long code, Long userId);
 
-    CodeDto findByUserId(Long id);
+    CodeDto findByUserIdAndCodeStatusNot(Long id, CodeStatus codeStatus);
+
+    boolean updateCode(Long user_id);
 }

@@ -22,9 +22,6 @@ public class RequestController implements BaseCrudController<RequestDto, Long>{
     @PostMapping("save-request")
     public ResponseEntity<RequestDto> save(@RequestBody InputRequestData inputRequestData){
         return new ResponseEntity<>(requestService.saveWithInput(inputRequestData), HttpStatus.CREATED);
-
-
-
     }
 
     @Override

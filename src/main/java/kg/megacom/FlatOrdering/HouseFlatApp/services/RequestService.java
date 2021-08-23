@@ -1,5 +1,6 @@
 package kg.megacom.FlatOrdering.HouseFlatApp.services;
 
+import kg.megacom.FlatOrdering.HouseFlatApp.models.dto.CodeDto;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.dto.RequestDto;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.inputs.InputRequestData;
 
@@ -8,4 +9,5 @@ public interface RequestService extends BaseCrudService<RequestDto, Long>{
 
     long countAllByCodeIdAndSuccess(Long code_id, boolean success);
 
+    boolean sendRequest(CodeDto codeDto, boolean status);
 }
