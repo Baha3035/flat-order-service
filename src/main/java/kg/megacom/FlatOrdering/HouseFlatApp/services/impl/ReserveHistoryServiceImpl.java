@@ -108,15 +108,15 @@ public class ReserveHistoryServiceImpl implements ReserveHistoryService {
             } else {
                 double moneyPaidBefore = payHistoryDtos.stream().mapToDouble(PayHistoryDto::getCash).sum();
                 payHistoryDto.setCash(cash);
+                if (moneyPaidBefore + payHistoryDto.getCash() >= totalPrice) {
+                    reserveHistoryDto.setReserveStatus(ReserveStatus.PAID);
+                }
             }
 
-            if (payHistoryDto.getCash() >= totalPrice) {
-                reserveHistoryDto.setReserveStatus(ReserveStatus.PAID);
-            }
 
             reserveHistoryDto = save(reserveHistoryDto);
             payHistoryDto.setReserveHistory(reserveHistoryDto);
-            payHistoryDto = payHistoryService.save(payHistoryDto);
+            payHistoryService.save(payHistoryDto);
             return reserveHistoryMapper.toOutputReserveHistory(reserveHistoryDto, cash);
         }else {
             throw new RuntimeException("Already paid!!!");
