@@ -11,6 +11,7 @@ import kg.megacom.FlatOrdering.HouseFlatApp.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -39,8 +40,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto update(UserDto userDto) {
         UserMapper userMapper = new UserMapper();
-        UserDto userDtoSaved = userMapper.toDto(userRepo.save(userMapper.toEntity(userDto)));
-        return userDtoSaved;
+        return userMapper.toDto(userRepo.save(userMapper.toEntity(userDto)));
     }
 
     @Override
@@ -74,8 +74,8 @@ public class UserServiceImpl implements UserService {
         LocalDateTime todaysDate = todayDateToConvert.toInstant()
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime();
-//        userDto.setBlockDate(todaysDate.plusHours(1)); потом поставь обратно
-        userDto.setBlockDate(todaysDate.minusHours(1));
+        userDto.setBlockDate(todaysDate.plusHours(1));
+//        userDto.setBlockDate(todaysDate.minusHours(1));
         update(userDto);
     }
 
@@ -95,13 +95,14 @@ public class UserServiceImpl implements UserService {
         long range = ChronoUnit.DAYS.between(todaysDate, userDto.getBlockDate());
 
         if(range > 0){
-            System.out.println("gun");
             return false;
         }
 
-        long possibleSeconds = todaysDate.until(userDto.getBlockDate(), ChronoUnit.SECONDS);
-        System.out.println("Possibler " + possibleSeconds);
-        if(possibleSeconds > 0){  //made less than 0
+        int nanos = Duration.between(userDto.getBlockDate() ,todaysDate).getNano();
+
+//        long possibleSeconds = todaysDate.until(userDto.getBlockDate(), ChronoUnit.SECONDS);
+        System.out.println("nanos " + nanos);
+        if(nanos < 0){  //made more than 0
             System.out.println("Unblocked");
             unblockTheUser(id);
             return false;

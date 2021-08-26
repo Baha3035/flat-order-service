@@ -13,6 +13,7 @@ import kg.megacom.FlatOrdering.HouseFlatApp.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -62,15 +63,18 @@ public class CodeServiceImpl implements CodeService {
                 .toLocalDateTime();
 
         long range = ChronoUnit.DAYS.between(codeDto.getEndDate(), todaysDate);
-        System.out.println("rangeik gandon" + range);
+        UserDto userDto = userService.findById(userId);
         if (range > 0) {
-            sendCode(userService.findById(userId));
+            sendCode(userDto);
             throw new CodeIsInConflictException("Your code is out of time, so we send you new code");
         }
 
-        long possibleSeconds = todaysDate.until(codeDto.getEndDate(), ChronoUnit.SECONDS);
-        System.out.println(possibleSeconds);
-        if(possibleSeconds < 0) {
+//        long possibleSeconds = todaysDate.until(codeDto.getEndDate(), ChronoUnit.SECONDS);
+//        System.out.println(possibleSeconds);
+        int nanos = Duration.between(codeDto.getEndDate() ,todaysDate).getNano();
+//        System.out.println(nanos);
+        if(nanos > 0) {
+            System.out.println(nanos);
             boolean status;
             if (code == trueCode) {
                 codeDto.setCodeStatus(CodeStatus.APPROVED);
@@ -89,12 +93,14 @@ public class CodeServiceImpl implements CodeService {
                 codeDto.setCodeStatus(CodeStatus.CANCELED);
                 userService.blockTheUser(userId);
                 save(codeDto);
-                return false;
+//                sendCode(userDto);
+//                return false;
             }
         }else {
             codeDto.setCodeStatus(CodeStatus.CANCELED);
-//            userService.blockTheUser(userId);
             save(codeDto);
+            sendCode(userDto);
+            return false;
         }
         return false;
     }
