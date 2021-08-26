@@ -1,6 +1,7 @@
 package kg.megacom.FlatOrdering.HouseFlatApp.services.impl;
 
 import kg.megacom.FlatOrdering.HouseFlatApp.dao.PayHistoryRepo;
+import kg.megacom.FlatOrdering.HouseFlatApp.exceptions.NotFoundByIdException;
 import kg.megacom.FlatOrdering.HouseFlatApp.mappers.PayHistoryMapper;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.dto.PayHistoryDto;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.entities.PayHistory;
@@ -30,7 +31,7 @@ public class PayHistoryServiceImpl implements PayHistoryService {
     @Override
     public PayHistoryDto findById(Long id) {
         PayHistoryMapper payHistoryMapper = new PayHistoryMapper();
-        PayHistory payHistory = payHistoryRepo.findById(id).orElseThrow(()-> new RuntimeException("Не найден!"));
+        PayHistory payHistory = payHistoryRepo.findById(id).orElseThrow(()-> new NotFoundByIdException("PayHistoryNotFound!!!"));
         return payHistoryMapper.toDto(payHistory);
     }
 

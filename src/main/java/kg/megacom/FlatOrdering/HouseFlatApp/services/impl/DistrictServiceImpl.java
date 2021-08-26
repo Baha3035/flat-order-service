@@ -1,5 +1,6 @@
 package kg.megacom.FlatOrdering.HouseFlatApp.services.impl;
 import kg.megacom.FlatOrdering.HouseFlatApp.dao.DistrictRepo;
+import kg.megacom.FlatOrdering.HouseFlatApp.exceptions.NotFoundByIdException;
 import kg.megacom.FlatOrdering.HouseFlatApp.mappers.DistrictMapper;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.dto.DistrictDto;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.entities.District;
@@ -37,7 +38,7 @@ public class DistrictServiceImpl implements DistrictService {
     @Override
     public DistrictDto findById(Long id) {
         DistrictMapper districtMapper = new DistrictMapper();
-        District district = districtRepo.findById(id).orElseThrow(()->new RuntimeException("Район по айди не найден!"));
+        District district = districtRepo.findById(id).orElseThrow(()->new NotFoundByIdException("District not found!"));
         return districtMapper.toDto(district);
     }
 

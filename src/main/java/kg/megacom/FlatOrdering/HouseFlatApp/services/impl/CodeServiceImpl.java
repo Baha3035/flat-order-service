@@ -2,6 +2,8 @@ package kg.megacom.FlatOrdering.HouseFlatApp.services.impl;
 
 import kg.megacom.FlatOrdering.HouseFlatApp.dao.CodeRepo;
 import kg.megacom.FlatOrdering.HouseFlatApp.enums.CodeStatus;
+import kg.megacom.FlatOrdering.HouseFlatApp.exceptions.CodeIsInConflictException;
+import kg.megacom.FlatOrdering.HouseFlatApp.exceptions.UserException;
 import kg.megacom.FlatOrdering.HouseFlatApp.mappers.CodeMapper;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.dto.CodeDto;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.dto.UserDto;
@@ -46,14 +48,26 @@ public class CodeServiceImpl implements CodeService {
     public boolean putCode(long code, Long userId) {
         CodeDto codeDto = findByUserIdAndCodeStatusNot(userId, CodeStatus.CANCELED);
         if(codeDto.getCodeStatus().equals(CodeStatus.APPROVED)){
-            throw new RuntimeException("Your code is already approved");
+            throw new CodeIsInConflictException("Your code is already approved");
         }
+        if(userService.userIsBlocked(userId)){
+            throw new UserException("User is blocked");
+        }
+
+//        if(codeDto.get)
         long trueCode = codeDto.getCode();
-//        RequestDto requestDto = new RequestDto();
         Date todayDateToConvert = new Date();
         LocalDateTime todaysDate = todayDateToConvert.toInstant()
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime();
+
+        long range = ChronoUnit.DAYS.between(codeDto.getEndDate(), todaysDate);
+        System.out.println("rangeik gandon" + range);
+        if (range > 0) {
+            sendCode(userService.findById(userId));
+            throw new CodeIsInConflictException("Your code is out of time, so we send you new code");
+        }
+
         long possibleSeconds = todaysDate.until(codeDto.getEndDate(), ChronoUnit.SECONDS);
         System.out.println(possibleSeconds);
         if(possibleSeconds < 0) {
@@ -66,8 +80,6 @@ public class CodeServiceImpl implements CodeService {
                 status = false;
             }
             codeDto = save(codeDto);
-//            requestDto.setCode(codeDto);
-//            requestDto = requestService.save(requestDto);
             boolean isSuccessful = requestService.sendRequest(codeDto, status);
             if(isSuccessful){
                 return true;
@@ -75,14 +87,13 @@ public class CodeServiceImpl implements CodeService {
             long countOfNotSuccessfulRequests = requestService.countAllByCodeIdAndSuccess(codeDto.getId(), false);
             if(countOfNotSuccessfulRequests > 2){
                 codeDto.setCodeStatus(CodeStatus.CANCELED);
-                codeDto = save(codeDto);
+                userService.blockTheUser(userId);
+                save(codeDto);
                 return false;
             }
         }else {
             codeDto.setCodeStatus(CodeStatus.CANCELED);
-            UserDto userDto = userService.findById(userId);
-            userDto.setBlockDate(todaysDate.plusHours(1));
-            userService.update(userDto);
+//            userService.blockTheUser(userId);
             save(codeDto);
         }
         return false;
@@ -92,7 +103,7 @@ public class CodeServiceImpl implements CodeService {
         CodeMapper codeMapper = new CodeMapper();
         CodeDto codeDto = codeMapper.toDto(codeRepo.findByUserIdAndCodeStatusNot(id, codeStatus));
         if(codeDto == null){
-            throw new RuntimeException("Your code is cancelled!!!");
+            throw new CodeIsInConflictException("Your code is cancelled!!!");
         }
         return codeMapper.toDto(codeRepo.findByUserIdAndCodeStatusNot(id, codeStatus));
     }

@@ -2,6 +2,10 @@ package kg.megacom.FlatOrdering.HouseFlatApp.services.impl;
 
 import kg.megacom.FlatOrdering.HouseFlatApp.dao.ReserveHistoryRepo;
 import kg.megacom.FlatOrdering.HouseFlatApp.enums.ReserveStatus;
+import kg.megacom.FlatOrdering.HouseFlatApp.exceptions.NotFoundByIdException;
+import kg.megacom.FlatOrdering.HouseFlatApp.exceptions.PaymentException;
+import kg.megacom.FlatOrdering.HouseFlatApp.exceptions.ReserveIsCancelledException;
+import kg.megacom.FlatOrdering.HouseFlatApp.exceptions.UserException;
 import kg.megacom.FlatOrdering.HouseFlatApp.mappers.ReserveHistoryMapper;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.dto.HouseDto;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.dto.PayHistoryDto;
@@ -37,11 +41,16 @@ public class ReserveHistoryServiceImpl implements ReserveHistoryService {
 
     @Override
     public ReserveHistoryDto saveWithInput(InputReserveHistoryData inputReserveHistoryData) {
+        if(userService.userIsBlocked(inputReserveHistoryData.getCustomerUser())){
+            throw new UserException("User is blocked!!!");
+        }
         List<ReserveHistoryDto> allReserves = findAll();
         LocalDate startDate = inputReserveHistoryData.getStartDate();
         LocalDate endDate = inputReserveHistoryData.getEndDate();
         if(checkFreeTime(allReserves, startDate, endDate)){
-            throw new RuntimeException("House is reserved in this range of days!!!");
+            throw new ReserveIsCancelledException("House is reserved in this range of days!!!");
+        }else if(endDate.isBefore(startDate)){
+            throw new ReserveIsCancelledException("Invalid date!!!");
         }
         Long range = ChronoUnit.DAYS.between(inputReserveHistoryData.getStartDate(), inputReserveHistoryData.getEndDate());
         HouseDto houseDto = houseService.findById(inputReserveHistoryData.getHouseId());
@@ -80,9 +89,11 @@ public class ReserveHistoryServiceImpl implements ReserveHistoryService {
     @Override
     public OutputReserveData pay(Long reserve_id, double cash) {
         if (cash <= 0) {
-            throw new RuntimeException("You gotta pay!");
+            throw new PaymentException("You gotta pay!");
+        } ReserveHistoryDto reserveHistoryDto = findById(reserve_id);
+        if(userService.userIsBlocked(reserveHistoryDto.getUser().getId())){
+            throw new UserException("User is blocked");
         }
-        ReserveHistoryDto reserveHistoryDto = findById(reserve_id);
         ReserveStatus reserveStatus = reserveHistoryDto.getReserveStatus();
         ReserveHistoryMapper reserveHistoryMapper = new ReserveHistoryMapper();
         if (reserveStatus.equals(ReserveStatus.RESERVED)) {
@@ -96,7 +107,7 @@ public class ReserveHistoryServiceImpl implements ReserveHistoryService {
             if (range >= 1) {
                 reserveHistoryDto.setReserveStatus(ReserveStatus.CANCELLED);
                 save(reserveHistoryDto);
-                throw new RuntimeException("You're out of time!!!");
+                throw new ReserveIsCancelledException("You're out of time!!!");
             }
 
             double totalPrice = reserveHistoryDto.getTotalPrice();
@@ -119,7 +130,7 @@ public class ReserveHistoryServiceImpl implements ReserveHistoryService {
             payHistoryService.save(payHistoryDto);
             return reserveHistoryMapper.toOutputReserveHistory(reserveHistoryDto, cash);
         }else {
-            throw new RuntimeException("Already paid!!!");
+            throw new PaymentException("Already paid!!!");
         }
     }
 
@@ -138,9 +149,9 @@ public class ReserveHistoryServiceImpl implements ReserveHistoryService {
     @Override
     public ReserveHistoryDto findById(Long id) {
         ReserveHistoryMapper reserveHistoryMapper = new ReserveHistoryMapper();
-        ReserveHistory reserveHistory = reserveHistoryRepo.findById(id).orElseThrow(()-> new RuntimeException("Айди заказа не найден!"));
+        ReserveHistory reserveHistory = reserveHistoryRepo.findById(id).orElseThrow(()-> new NotFoundByIdException("Reserve not found!!!"));
         if(reserveHistory.getReserveStatus()==ReserveStatus.CANCELLED){
-            throw new RuntimeException("Reserve is cancelled");
+            throw new ReserveIsCancelledException("Reserve is cancelled");
         }
         return reserveHistoryMapper.toDto(reserveHistory);
     }

@@ -1,6 +1,7 @@
 package kg.megacom.FlatOrdering.HouseFlatApp.services.impl;
 
 import kg.megacom.FlatOrdering.HouseFlatApp.dao.ImageRepo;
+import kg.megacom.FlatOrdering.HouseFlatApp.exceptions.NotFoundByIdException;
 import kg.megacom.FlatOrdering.HouseFlatApp.mappers.HouseMapper;
 import kg.megacom.FlatOrdering.HouseFlatApp.mappers.ImageMapper;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.dto.HouseDto;
@@ -57,7 +58,7 @@ public class ImageServiceImpl implements ImageService {
     @Override
     public ImageDto findById(Long id) {
         ImageMapper imageMapper = new ImageMapper();
-        return imageMapper.toDto(imageRepo.findById(id).orElseThrow(()->new RuntimeException("Image not found!!!")));
+        return imageMapper.toDto(imageRepo.findById(id).orElseThrow(()->new NotFoundByIdException("Image not found!!!")));
     }
 
     @Override

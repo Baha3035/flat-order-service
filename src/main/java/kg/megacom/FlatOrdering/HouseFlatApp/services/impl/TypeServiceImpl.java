@@ -1,6 +1,7 @@
 package kg.megacom.FlatOrdering.HouseFlatApp.services.impl;
 
 import kg.megacom.FlatOrdering.HouseFlatApp.dao.TypeRepo;
+import kg.megacom.FlatOrdering.HouseFlatApp.exceptions.NotFoundByIdException;
 import kg.megacom.FlatOrdering.HouseFlatApp.mappers.TypeMapper;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.dto.TypeDto;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.entities.Type;
@@ -30,7 +31,7 @@ public class TypeServiceImpl implements TypeService {
     @Override
     public TypeDto findById(Long id) {
         TypeMapper typeMapper = new TypeMapper();
-        Type type = typeRepo.findById(id).orElseThrow(()->new RuntimeException("Тип по айди не найден!"));
+        Type type = typeRepo.findById(id).orElseThrow(()->new NotFoundByIdException("Type is not found!!!"));
         return typeMapper.toDto(type);
     }
 

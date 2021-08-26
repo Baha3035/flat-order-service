@@ -1,6 +1,7 @@
 package kg.megacom.FlatOrdering.HouseFlatApp.services.impl;
 
 import kg.megacom.FlatOrdering.HouseFlatApp.dao.HouseRepo;
+import kg.megacom.FlatOrdering.HouseFlatApp.exceptions.NotFoundByIdException;
 import kg.megacom.FlatOrdering.HouseFlatApp.mappers.HouseMapper;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.dto.HouseDto;
 import kg.megacom.FlatOrdering.HouseFlatApp.models.inputs.InputHouseData;
@@ -44,9 +45,43 @@ public class HouseServiceImpl implements HouseService {
     }
 
     @Override
+    public List<HouseDto> findByDistrictId(Long id) {
+        return map().toDtoList(houseRepo.findByDistrictId(id));
+    }
+
+    @Override
+    public List<HouseDto> findByCityId(Long id) {
+        return map().toDtoList(houseRepo.findByCityVillageId(id));
+    }
+
+    @Override
+    public List<HouseDto> findByTypeId(Long id) {
+        return map().toDtoList(houseRepo.findByTypeId(id));
+    }
+
+    @Override
+    public List<HouseDto> findByFloor(int floor) {
+        return map().toDtoList(houseRepo.findByFloor(floor));
+    }
+
+    @Override
+    public List<HouseDto> findByRoom(int room) {
+        return map().toDtoList(houseRepo.findByRooms(room));
+    }
+
+    @Override
+    public List<HouseDto> findByInternet(boolean internet) {
+        return map().toDtoList(houseRepo.findByInternet(internet));
+    }
+
+    @Override
+    public List<HouseDto> findByFurniture(boolean furniture) {
+        return map().toDtoList(houseRepo.findByFurniture(furniture));
+    }
+
+    @Override
     public HouseDto save(HouseDto houseDto) {
-        HouseMapper houseMapper = new HouseMapper();
-        return houseMapper.toDto(houseRepo.save(houseMapper.toEntity(houseDto)));
+        return map().toDto(houseRepo.save(map().toEntity(houseDto)));
     }
 
     @Override
@@ -56,12 +91,16 @@ public class HouseServiceImpl implements HouseService {
 
     @Override
     public HouseDto findById(Long id) {
-        HouseMapper houseMapper = new HouseMapper();
-        return houseMapper.toDto(houseRepo.findById(id).orElseThrow(()->new RuntimeException("House not found!!!")));
+        return map().toDto(houseRepo.findById(id).orElseThrow(()->new NotFoundByIdException("House not found!!!")));
     }
 
     @Override
     public List<HouseDto> findAll() {
         return null;
+    }
+
+    public HouseMapper map() {
+        HouseMapper houseMapper = new HouseMapper();
+        return houseMapper;
     }
 }
